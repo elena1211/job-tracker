@@ -28,114 +28,117 @@ const initialData = [
   },
 ];
 
+const statusColors = {
+  Applied: 'bg-blue-100 text-blue-800 dark:bg-blue-500 dark:text-white',
+  Interviewing: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-500 dark:text-white',
+  Rejected: 'bg-red-100 text-red-800 dark:bg-red-500 dark:text-white',
+  Offer: 'bg-green-100 text-green-800 dark:bg-green-500 dark:text-white',
+};
+
 const JobTracker = () => {
   const [jobs, setJobs] = useState(() => {
     const stored = localStorage.getItem('jobs');
     return stored ? JSON.parse(stored) : initialData;
   });
+
   const [form, setForm] = useState({
     company: '',
     title: '',
-    date: '',
     status: 'Applied',
+    date: '',
     note: '',
   });
+  const [showForm, setShowForm] = useState(false);
 
   useEffect(() => {
     localStorage.setItem('jobs', JSON.stringify(jobs));
   }, [jobs]);
 
   const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setForm((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (!form.company || !form.title || !form.date) return;
-    setJobs([
-      {
-        id: uuidv4(),
-        ...form,
-      },
-      ...jobs,
-    ]);
-    setForm({ company: '', title: '', date: '', status: 'Applied', note: '' });
+  const handleAddJob = () => {
+    if (!form.company || !form.title || !form.date) return alert('Please fill in all required fields.');
+    const newJob = {
+      id: uuidv4(),
+      ...form,
+    };
+    setJobs([newJob, ...jobs]);
+    setForm({ company: '', title: '', status: 'Applied', date: '', note: '' });
+    setShowForm(false);
+  };
+
+  const handleDelete = (id) => {
+    if (confirm('Are you sure you want to delete this job?')) {
+      setJobs(jobs.filter(job => job.id !== id));
+    }
   };
 
   return (
-    <div className="min-h-screen bg-white dark:bg-zinc-900 flex flex-col items-center py-8 px-2">
-      <div className="w-full max-w-6xl">
-        <h1 className="text-4xl font-bold mb-10 text-center text-zinc-900 dark:text-white">Job Application Tracker</h1>
-        {/* Add Job Form */}
-        <form onSubmit={handleSubmit} className="bg-white dark:bg-zinc-900 p-6 rounded-xl shadow mb-10 flex flex-col md:flex-row md:items-end gap-4 max-w-4xl mx-auto">
-          <input
-            type="text"
-            name="company"
-            value={form.company}
-            onChange={handleChange}
-            placeholder="Company Name"
-            className="border border-zinc-300 dark:border-zinc-700 rounded px-3 py-2 flex-1 text-zinc-900 dark:text-white bg-white dark:bg-zinc-800"
-            required
-          />
-          <input
-            type="text"
-            name="title"
-            value={form.title}
-            onChange={handleChange}
-            placeholder="Position"
-            className="border border-zinc-300 dark:border-zinc-700 rounded px-3 py-2 flex-1 text-zinc-900 dark:text-white bg-white dark:bg-zinc-800"
-            required
-          />
-          <input
-            type="date"
-            name="date"
-            value={form.date}
-            onChange={handleChange}
-            className="border border-zinc-300 dark:border-zinc-700 rounded px-3 py-2 flex-1 text-zinc-900 dark:text-white bg-white dark:bg-zinc-800"
-            required
-          />
-          <select
-            name="status"
-            value={form.status}
-            onChange={handleChange}
-            className="border border-zinc-300 dark:border-zinc-700 rounded px-3 py-2 flex-1 text-zinc-900 dark:text-white bg-white dark:bg-zinc-800"
-          >
-            <option>Applied</option>
-            <option>Interviewing</option>
-            <option>Rejected</option>
-            <option>Offer</option>
-          </select>
-          <input
-            type="text"
-            name="note"
-            value={form.note}
-            onChange={handleChange}
-            placeholder="Note"
-            className="border border-zinc-300 dark:border-zinc-700 rounded px-3 py-2 flex-1 text-zinc-900 dark:text-white bg-white dark:bg-zinc-800"
-          />
+    <div className="min-h-screen bg-gradient-to-br from-zinc-100 to-zinc-200 dark:from-zinc-800 dark:to-zinc-700 px-4 py-10">
+      <div className="max-w-5xl mx-auto">
+        <h1 className="text-4xl font-extrabold text-center mb-6 text-zinc-900 dark:text-white">
+          🎯 Job Application Tracker
+        </h1>
+
+        <div className="flex justify-center mb-8">
           <button
-            type="submit"
-            className="bg-blue-700 text-white px-6 py-2 rounded-xl font-semibold hover:bg-blue-800 transition w-full md:w-auto"
+            onClick={() => setShowForm(!showForm)}
+            className="px-6 py-2 bg-blue-600 text-white rounded-xl shadow hover:bg-blue-700 transition"
           >
-            Add
+            {showForm ? 'Cancel' : '✚ Add Job'}
           </button>
-        </form>
-        {/* Job List */}
-        <div className="flex flex-col gap-8">
+        </div>
+
+        {showForm && (
+          <div className="bg-white/90 dark:bg-zinc-800/90 p-6 rounded-xl shadow-md mb-10 max-w-xl mx-auto">
+            <div className="grid gap-4">
+              <input type="text" name="company" placeholder="Company" value={form.company} onChange={handleChange} className="p-2 rounded border border-zinc-300 dark:border-white dark:bg-zinc-700 dark:text-white dark:placeholder-gray-300" />
+              <input type="text" name="title" placeholder="Job Title" value={form.title} onChange={handleChange} className="p-2 rounded border border-zinc-300 dark:border-white dark:bg-zinc-700 dark:text-white dark:placeholder-gray-300" />
+              <input type="date" name="date" value={form.date} onChange={handleChange} className="p-2 rounded border border-zinc-300 dark:border-white dark:bg-zinc-700 dark:text-white" />
+              <select name="status" value={form.status} onChange={handleChange} className="p-2 rounded border border-zinc-300 dark:border-white dark:bg-zinc-700 dark:text-white">
+                <option>Applied</option>
+                <option>Interviewing</option>
+                <option>Rejected</option>
+                <option>Offer</option>
+              </select>
+              <textarea name="note" placeholder="Notes (optional)" value={form.note} onChange={handleChange} className="p-2 rounded border border-zinc-300 dark:border-zinc-600 dark:bg-zinc-700 dark:text-white dark:placeholder-gray-300"></textarea>
+              <button onClick={handleAddJob} className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
+                ✅ Save Job
+              </button>
+            </div>
+          </div>
+        )}
+
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {jobs.map((job) => (
             <div
               key={job.id}
-              className="bg-zinc-900 text-white flex flex-row justify-between items-center rounded-xl shadow p-8 max-w-6xl mx-auto min-h-[150px]"
+              className="backdrop-blur-sm bg-white/80 dark:bg-zinc-800/80 border border-zinc-300 dark:border-zinc-600 p-5 rounded-2xl shadow-lg hover:shadow-xl transition duration-300"
             >
-              <div className="flex flex-col gap-1">
-                <h2 className="text-2xl font-bold text-blue-900 dark:text-blue-300">{job.company}</h2>
-                <p className="text-lg text-zinc-200">{job.title}</p>
-                <p className="text-md text-zinc-400 italic">Applied on: {job.date}</p>
-                <p className="text-md text-zinc-400 italic">{job.note}</p>
+              <div className="flex justify-between items-start mb-2">
+                <div>
+                  <h2 className="text-xl font-semibold text-zinc-800 dark:text-white">{job.company}</h2>
+                  <p className="text-sm text-zinc-500 dark:text-zinc-300">{job.title}</p>
+                </div>
+                <span className={`text-xs font-bold px-3 py-1 rounded-full ${statusColors[job.status]}`}>
+                  {job.status}
+                </span>
               </div>
-              <span className="ml-8 px-8 py-3 rounded-full text-lg font-medium bg-blue-800 text-blue-100 dark:bg-blue-800 dark:text-blue-200">
-                {job.status}
-              </span>
+              <div className="text-sm text-zinc-600 dark:text-zinc-200">
+                <p>📅 Applied on: <span className="font-medium">{job.date}</span></p>
+                {job.note && <p className="italic mt-1">📝 {job.note}</p>}
+              </div>
+              <div className="mt-4 text-right">
+                <button
+                  onClick={() => handleDelete(job.id)}
+                  className="text-sm text-red-500 hover:text-red-700 dark:hover:text-red-300"
+                >
+                  🗑 Delete
+                </button>
+              </div>
             </div>
           ))}
         </div>
@@ -145,4 +148,3 @@ const JobTracker = () => {
 };
 
 export default JobTracker;
-
